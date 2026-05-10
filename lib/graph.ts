@@ -116,6 +116,38 @@ export async function sendDossierEmail(dossierFields: Record<string, unknown>) {
     : ""
   const commentaire = (f.Commentaires_SG as string || "").replace(/<[^>]*>/g, "").trim()
 
+  // Recuperer les documents en pieces jointes
+  const lienDossier = f.Lien_x0020_dossier as string | undefined
+  let folderName = nom.replace(/ /g, "_")
+  if (lienDossier) {
+    const decoded = decodeURIComponent(lienDossier)
+    const segments = decoded.split("/")
+    const last = segments[segments.length - 1]
+    if (last && last.length > 0) folderName = last
+  }
+
+  const photos = await getDossierPhotos(folderName)
+  const attachments: Record<string, string>[] = []
+
+  for (const photo of photos) {
+    const downloadUrl = photo["@microsoft.graph.downloadUrl"] as string
+    if (!downloadUrl) continue
+    try {
+      const fileRes = await fetch(downloadUrl)
+      const buffer = await fileRes.arrayBuffer()
+      const base64 = Buffer.from(buffer).toString("base64")
+      const mimeType = (photo.file as Record<string, string>)?.mimeType || "application/octet-stream"
+      attachments.push({
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        name: photo.name as string,
+        contentType: mimeType,
+        contentBytes: base64,
+      })
+    } catch {
+      // Ignorer les fichiers non telechargeable
+    }
+  }
+
   const subject = `Dossier ASMAR 2026 valide - ${nom} (${nAdh})`
 
   const body = `
@@ -126,6 +158,7 @@ export async function sendDossierEmail(dossierFields: Record<string, unknown>) {
   </div>
   <div style="background:#f0f7ff;padding:16px;border-left:4px solid #22c55e">
     <p style="margin:0;font-weight:bold;color:#16a34a">&#10003; Ce dossier a ete valide par la SG</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#166534">${attachments.length} document(s) en piece(s) jointe(s)</p>
   </div>
   <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none">
     <h3 style="color:#1e3a5f;margin-top:0">Informations adherent</h3>
@@ -147,11 +180,12 @@ export async function sendDossierEmail(dossierFields: Record<string, unknown>) {
   </div>
 </body></html>`
 
-  const mailPayload = {
+  const mailPayload: Record<string, unknown> = {
     message: {
       subject,
       body: { contentType: "HTML", content: body },
       toRecipients: [{ emailAddress: { address: MAIL_RECIPIENT } }],
+      attachments: attachments.length > 0 ? attachments : undefined,
     },
     saveToSentItems: true,
   }
@@ -172,5 +206,5 @@ export async function sendDossierEmail(dossierFields: Record<string, unknown>) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.error?.message || `Erreur envoi email: ${res.status}`)
   }
-  return { sent: true }
+  return { sent: true, attachments: attachments.length }
 }
