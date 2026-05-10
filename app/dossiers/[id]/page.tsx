@@ -76,7 +76,7 @@ export default async function DossierDetail({ params }: { params: Promise<{ id: 
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="font-semibold text-gray-800 mb-1">Documents ({photos.length})</h2>
           <p className="text-xs text-gray-400 mb-4">Dossier: {folderName}</p>
-          <PhotoGrid photos={photos as Parameters<typeof PhotoGrid>[0]["photos"]} />
+          <PhotoGrid photos={photos as any} />
         </div>
       </main>
     </div>

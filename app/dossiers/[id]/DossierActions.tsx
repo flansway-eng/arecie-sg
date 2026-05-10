@@ -21,6 +21,7 @@ export default function DossierActions({
   const [statut, setStatut] = useState(currentStatut)
   const [commentaire, setCommentaire] = useState(currentCommentaire)
   const [saving, setSaving] = useState(false)
+  const [sending, setSending] = useState(false)
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
   const router = useRouter()
 
@@ -44,6 +45,25 @@ export default function DossierActions({
       setMessage({ text: "Erreur reseau, verifiez votre connexion", ok: false })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleSendDPS = async () => {
+    setSending(true)
+    setMessage(null)
+    try {
+      const res = await fetch(`/api/dossiers/${id}/send`, { method: "POST" })
+      const data = await res.json()
+      if (res.ok) {
+        setMessage({ text: "Dossier envoye a arecie@flansway.com !", ok: true })
+        setTimeout(() => { setMessage(null); router.refresh() }, 3000)
+      } else {
+        setMessage({ text: data.error || "Erreur lors de l'envoi", ok: false })
+      }
+    } catch {
+      setMessage({ text: "Erreur reseau lors de l'envoi", ok: false })
+    } finally {
+      setSending(false)
     }
   }
 
@@ -79,6 +99,22 @@ export default function DossierActions({
         className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
         {saving ? "Enregistrement..." : "Enregistrer la decision"}
       </button>
+
+      {statut === "Valide" && (
+        <button onClick={handleSendDPS} disabled={sending}
+          className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors">
+          {sending ? (
+            "Envoi en cours..."
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Envoyer a la DPS
+            </>
+          )}
+        </button>
+      )}
     </div>
   )
 }
