@@ -2,6 +2,17 @@ import { auth } from "@/auth"
 import { getDossier, getDossierPhotos } from "@/lib/graph"
 import Link from "next/link"
 import DossierActions from "./DossierActions"
+import PhotoGrid from "./PhotoGrid"
+
+function extractFolderName(lienDossier: string | undefined, title: string): string {
+  if (lienDossier) {
+    const decoded = decodeURIComponent(lienDossier)
+    const segments = decoded.split("/")
+    const last = segments[segments.length - 1]
+    if (last && last.length > 0) return last
+  }
+  return title?.replace(/ /g, "_") || ""
+}
 
 export default async function DossierDetail({ params }: { params: Promise<{ id: string }> }) {
   await auth()
@@ -9,13 +20,13 @@ export default async function DossierDetail({ params }: { params: Promise<{ id: 
   const dossier = await getDossier(id)
   const f = dossier.fields
 
-  const folderName = f?.Lien_x0020_dossier
-    ? decodeURIComponent(f.Lien_x0020_dossier.split("Documents%20Adhr%C3%A9rents/").pop() ||
-      f.Lien_x0020_dossier.split("Documents Adhérents/").pop() || f?.Title || "")
-    : f?.Title || ""
+  const folderName = extractFolderName(f?.Lien_x0020_dossier, f?.Title)
 
   let photos: Record<string, unknown>[] = []
-  try { photos = await getDossierPhotos(folderName) } catch { photos = [] }
+  try { photos = await getDossierPhotos(folderName) } catch (e) {
+    console.error("Photos error:", e)
+    photos = []
+  }
 
   const champs = [
     { label: "Nom adherent", value: f?.Title },
@@ -57,23 +68,9 @@ export default async function DossierDetail({ params }: { params: Promise<{ id: 
           />
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="font-semibold text-gray-800 mb-4">Documents ({photos.length})</h2>
-          {photos.length === 0 ? (
-            <p className="text-gray-400 text-sm">Aucun document trouve</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {photos.map((photo: Record<string, unknown>) => (
-                <a key={photo.id as string}
-                  href={photo["@microsoft.graph.downloadUrl"] as string}
-                  target="_blank" rel="noopener noreferrer"
-                  className="block border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="w-full h-32 flex items-center justify-center bg-gray-100 text-gray-500 text-xs p-2 text-center">
-                    {photo.name as string}
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
+          <h2 className="font-semibold text-gray-800 mb-1">Documents ({photos.length})</h2>
+          <p className="text-xs text-gray-400 mb-4">Dossier: {folderName}</p>
+          <PhotoGrid photos={photos as Parameters<typeof PhotoGrid>[0]["photos"]} />
         </div>
       </main>
     </div>
