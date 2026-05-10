@@ -4,6 +4,12 @@ import Link from "next/link"
 import DossierActions from "./DossierActions"
 import PhotoGrid from "./PhotoGrid"
 
+function stripHtml(html: string | undefined): string {
+  if (!html) return ""
+  // SharePoint stocke les textes multi-lignes en HTML - on extrait le texte brut
+  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim()
+}
+
 function extractFolderName(lienDossier: string | undefined, title: string): string {
   if (lienDossier) {
     const decoded = decodeURIComponent(lienDossier)
@@ -64,7 +70,7 @@ export default async function DossierDetail({ params }: { params: Promise<{ id: 
           <DossierActions
             id={id}
             currentStatut={f?.Statutdudossier || "En attente"}
-            currentCommentaire={f?.Commentaires_SG || ""}
+            currentCommentaire={stripHtml(f?.Commentaires_SG)}
           />
         </div>
         <div className="bg-white rounded-xl shadow-sm border p-6">
