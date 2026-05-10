@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: arecie-sg
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXTAUTH_URL
+        value: https://arecie-sg.onrender.com
+      - key: AZURE_AD_CLIENT_ID
+        sync: false
+      - key: AZURE_AD_CLIENT_SECRET
+        sync: false
+      - key: AZURE_AD_TENANT_ID
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: SHAREPOINT_HOST
+        sync: false
+      - key: SHAREPOINT_SITE_PATH
+        sync: false
+      - key: SHAREPOINT_LIST_ID
+        sync: false
+      - key: SHAREPOINT_DOCS_DRIVE_ID
+        sync: false
+      - key: MAIL_SENDER
+        sync: false
+      - key: MAIL_RECIPIENT
+        sync: false
