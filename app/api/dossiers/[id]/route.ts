@@ -9,7 +9,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   try {
     const dossier = await getDossier(id)
     return NextResponse.json(dossier)
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
@@ -22,7 +22,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try {
     const result = await updateDossier(id, body.statut, body.commentaire)
     return NextResponse.json(result)
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

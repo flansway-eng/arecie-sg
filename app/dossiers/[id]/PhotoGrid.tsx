@@ -1,6 +1,6 @@
 "use client"
 
-interface PhotoItem {
+export interface PhotoItem {
   id: string
   name: string
   "@microsoft.graph.downloadUrl"?: string

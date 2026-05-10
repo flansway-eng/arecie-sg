@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { getDossier, getDossierPhotos } from "@/lib/graph"
 import Link from "next/link"
 import DossierActions from "./DossierActions"
-import PhotoGrid from "./PhotoGrid"
+import PhotoGrid, { type PhotoItem } from "./PhotoGrid"
 
 function stripHtml(html: string | undefined): string {
   if (!html) return ""
@@ -76,7 +76,7 @@ export default async function DossierDetail({ params }: { params: Promise<{ id: 
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="font-semibold text-gray-800 mb-1">Documents ({photos.length})</h2>
           <p className="text-xs text-gray-400 mb-4">Dossier: {folderName}</p>
-          <PhotoGrid photos={photos as any} />
+          <PhotoGrid photos={photos as unknown as PhotoItem[]} />
         </div>
       </main>
     </div>
